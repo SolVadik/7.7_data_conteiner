@@ -1,9 +1,18 @@
-#include <iostream>
+#pragma once
 #include "conteiner.h"
 
+
 Conteiner::Conteiner(int length) : length_(length)
-{
-	data_ = new int [length] {};
+{	
+    try
+    {
+        bad_length(length);
+        data_ = new int [length] {};
+    }
+    catch (Except& exc)
+    {
+        std::cout << "An array exception occurred (" << exc.what() << " " << length << " )" << std::endl;
+    }
 }
 
 Conteiner::Conteiner(Conteiner& a)
@@ -15,18 +24,21 @@ Conteiner::Conteiner(Conteiner& a)
 
 Conteiner::~Conteiner()
 {
-	delete[] data_;
-}
-
-void Conteiner::erase()
-{
     delete[] data_;
-    data_ = nullptr;
-    length_ = 0;
 }
 
 int& Conteiner::operator[](int index)
 {
+    try
+    {
+        bad_range(index);
+        
+    }
+    catch (Except& exc)
+    {
+        std::cout << "An array exception occurred (" << exc.what() << " " << index << " )" << std::endl;
+        index = 0;
+    }
     return data_[index];
 }
 
@@ -41,6 +53,24 @@ Conteiner& Conteiner::operator=(Conteiner& a)
     return *this;
 }
 
+void Conteiner::show()
+{
+    if (length_ != 0)
+    {
+        for (int i{ 0 }; i < length_; i++)
+        {
+            std::cout << data_[i] << " ";
+        }
+    }
+    else
+    {
+        std::cout << 0;
+    }
+}
+
+//const int& Conteiner::get_data(const int& index){return data_[index];}
+
+
 const int& Conteiner::get_length()
 {
     return length_;
@@ -48,7 +78,7 @@ const int& Conteiner::get_length()
 
 void Conteiner::reallocate(const int& new_length)
 {
-    
+
     erase();
     if (new_length <= 0)
         return;
@@ -81,41 +111,44 @@ void Conteiner::resize(const int& new_length)
     length_ = new_length;
 }
 
-void Conteiner::insert_before(const int& value, const int& index)
+void Conteiner::erase()
 {
-    int* data{ new int[length_ + 1] };
-    for (int before{ 0 }; before < index; ++before)
-        data[before] = data_[before];
-    data[index] = value;
-    for (int after{ index }; after < length_; ++after)
-        data[after + 1] = data_[after];
     delete[] data_;
-    data_ = data;
-    ++length_;
+    data_ = nullptr;
+    length_ = 0;
 }
 
 void Conteiner::remove(const int& index)
 {
-    if (length_ == 1)
+    try
     {
-        erase();
-        return;
+        bad_range(index);
+
+
+
+        if (length_ == 1)
+        {
+            erase();
+            return;
+        }
+        int* data{ new int[length_ - 1] };
+
+        for (int before{ 0 }; before < index; ++before)
+            data[before] = data_[before];
+
+        for (int after{ index + 1 }; after < length_; ++after)
+            data[after - 1] = data_[after];
+
+        delete[] data_;
+        data_ = data;
+        --length_;
     }
-    int* data{ new int[length_ - 1] };
+    catch (Except& exc)
+    {
+        std::cout << "An array exception occurred (" << exc.what() << " " << index << " )" << std::endl;
+    }
 
-    for (int before{ 0 }; before < index; ++before)
-        data[before] = data_[before];
-
-    for (int after{ index + 1 }; after < length_; ++after)
-        data[after - 1] = data_[after];
-
-    delete[] data_;
-    data_ = data;
-    --length_;
 }
-
-void Conteiner::insert_beginning(const int& value) { insert_before(value, 0); }
-void Conteiner::insert_end(const int& value) { insert_before(value, length_); }
 
 int Conteiner::find(const int& value)
 {
@@ -126,22 +159,44 @@ int Conteiner::find(const int& value)
     return -1;
 }
 
-void Conteiner::show()
+void Conteiner::insert_end(const int& value) { insert_before(value, length_); }
+
+void Conteiner::insert_beginning(const int& value) { insert_before(value, 0); }
+
+void Conteiner::insert_before(const int& value, const int& index)
 {
-    if (length_ != 0)
+    try
     {
-        for (int i{ 0 }; i < length_; i++)
-        {
-            std::cout << data_[i] << " ";
-        }
+        bad_range(index);
+
+
+        int* data{ new int[length_ + 1] };
+        for (int before{ 0 }; before < index; ++before)
+            data[before] = data_[before];
+        data[index] = value;
+        for (int after{ index }; after < length_; ++after)
+            data[after + 1] = data_[after];
+        delete[] data_;
+        data_ = data;
+        ++length_;
     }
-    else
+    catch (Except& exc)
     {
-        std::cout << 0;
+        std::cout << "An array exception occurred (" << exc.what() << " " << index << " )" << std::endl;
     }
 }
 
-const int& Conteiner::get_data(const int& index)
+void Conteiner::bad_range(const int& index)
 {
-    return data_[index];
+    if ((index < 0) || (index > length_)) throw Except(" Invalid index");
 }
+
+void Conteiner::bad_length(const int& length)
+{
+    if (length < 1) throw Except(" Invalid index");
+}
+
+
+
+
+
